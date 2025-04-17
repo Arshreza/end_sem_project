@@ -114,7 +114,7 @@ This project implements a **terminal-based Minesweeper game in C++**. The logic,
 ## 📉 Board State Representation
 
 - **Mine cells** are represented with a `.`.
-- **Flagged cells** are marked with a custom symbol (e.g., `F` or 🚩).
+- **Flagged cells** are marked with a symbol F.
 - **Numbered cells** represent count of adjacent mines.
 - **Unrevealed cells** are shown with a placeholder character.
 
