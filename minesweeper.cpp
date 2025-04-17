@@ -1,6 +1,12 @@
-#include <bits/stdc++.h>
-#include <unistd.h> // For usleep (Linux/Mac)
-// #include <windows.h> // Uncomment for Windows, and use Sleep() instead of usleep()
+#include <iostream>
+#include <cstdlib> // For system()
+#include <limits>  // For numeric_limits
+#include <ctime>
+#ifdef _WIN32
+#include <windows.h> // For Sleep()
+#else
+#include <unistd.h> // For usleep()
+#endif
 using namespace std;
 
 #define BEGINNER 0
@@ -34,12 +40,15 @@ void clearScreen() {
 
 // Function to create a loading animation
 void loadingAnimation(int duration) {
-    cout << "Loading ";
+    std::cout << "Loading ";
     for (int i = 0; i < 3; i++) {
-        cout << ".";
-        cout.flush();
-        usleep(duration * 1000); // Sleep for milliseconds
-        // Sleep(duration); // Use this for Windows instead
+        std::cout << ".";
+        std::cout.flush();
+        #ifdef _WIN32
+            Sleep(duration); // Sleep in milliseconds for Windows
+        #else
+            usleep(duration * 1000); // Convert milliseconds to microseconds for Unix
+        #endif
     }
     clearScreen();
 }
@@ -57,8 +66,11 @@ void explosionAnimation() {
     for (int i = 0; i < 4; i++) {
         clearScreen();
         cout << COLOR_RED << explosion[i] << COLOR_RESET << endl;
-        usleep(300000); // 300ms delay
-        // Sleep(300); // Use this for Windows instead
+        #ifdef _WIN32
+            Sleep(300);
+        #else
+            usleep(300000);
+        #endif
     }
 }
 
@@ -77,8 +89,11 @@ void celebrationAnimation() {
         cout << COLOR_YELLOW << fireworks[i] << COLOR_RESET << endl;
         cout << " CONGRATULATIONS! " << endl;
         cout << COLOR_YELLOW << fireworks[(i+2)%4] << COLOR_RESET << endl;
-        usleep(300000); // 300ms delay
-        // Sleep(300); // Use this for Windows instead
+        #ifdef _WIN32
+            Sleep(300);
+        #else
+            usleep(300000);
+        #endif
     }
 }
 
@@ -96,7 +111,11 @@ bool isMine(int row, int col, char board[][MAXSIDE]) {
 void makeMove(int *x, int *y, char *action) {
     while (true) {
         printf("Enter your move (row, column) and action (r for reveal, f for flag) -> ");
-        scanf("%d %d %c", x, y, action);
+        if (scanf("%d %d %c", x, y, action) != 3) {
+            printf("Invalid input. Try again.\n");
+            while (getchar() != '\n'); // Clear input buffer
+            continue;
+        }
         *action = tolower(*action);
         if (isValid(*x, *y)) {
             if (*action == 'r' || *action == 'f') {
@@ -105,6 +124,8 @@ void makeMove(int *x, int *y, char *action) {
         }
         printf("Invalid input. Try again.\n");
     }
+    // Clear any remaining input after successful read
+    while (getchar() != '\n');
 }
 
 // Print the current game board with colors and animations
@@ -184,8 +205,11 @@ void revealCell(int row, int col, char myBoard[][MAXSIDE], char realBoard[][MAXS
     // Animation effect for revealing
     myBoard[row][col] = '?';
     printBoard(myBoard);
-    usleep(50000); // 50ms delay
-    // Sleep(50); // Use this for Windows instead
+    #ifdef _WIN32
+        Sleep(50);
+    #else
+        usleep(50000);
+    #endif
     
     int count = countAdjacentMines(row, col, realBoard);
     myBoard[row][col] = count + '0';
@@ -204,14 +228,17 @@ void revealCell(int row, int col, char myBoard[][MAXSIDE], char realBoard[][MAXS
 // Special first move reveal with animation
 void firstMoveReveal(int row, int col, char myBoard[][MAXSIDE], 
                      char realBoard[][MAXSIDE], int *movesLeft) {
-    bool visited[MAXSIDE][MAXSIDE] = {false};
+    bool visited[MAXSIDE][MAXSIDE] = {{false}};
     
     // First reveal the clicked cell with animation
     int count = countAdjacentMines(row, col, realBoard);
     myBoard[row][col] = '?';
     printBoard(myBoard);
-    usleep(100000); // 100ms delay
-    // Sleep(100); // Use this for Windows instead
+    #ifdef _WIN32
+        Sleep(100);
+    #else
+        usleep(100000);
+    #endif
     
     myBoard[row][col] = count + '0';
     (*movesLeft)--;
@@ -261,8 +288,11 @@ void placeMines(int mines[][2], char realBoard[][MAXSIDE], int firstRow, int fir
             if (i % 5 == 0) {
                 cout << ".";
                 cout.flush();
-                usleep(50000); // 50ms delay
-                // Sleep(50); // Use this for Windows instead
+                #ifdef _WIN32
+                    Sleep(50);
+                #else
+                    usleep(50000);
+                #endif
             }
         }
     }
@@ -283,8 +313,11 @@ void initialise(char realBoard[][MAXSIDE], char myBoard[][MAXSIDE]) {
             if ((i * SIDE + j) % 10 == 0) {
                 cout << ".";
                 cout.flush();
-                usleep(10000); // 10ms delay
-                // Sleep(10); // Use this for Windows instead
+                #ifdef _WIN32
+                    Sleep(10);
+                #else
+                    usleep(10000);
+                #endif
             }
         }
     }
@@ -306,14 +339,17 @@ void displayInstructions() {
         "7. First move is always safe and reveals a larger area."
     };
     
-    for (int i = 0; i < 7; i++) {
+    for (size_t i = 0; i < 7; i++) {
         cout << instructions[i] << endl;
-        usleep(200000); // 200ms delay between lines
-        // Sleep(200); // Use this for Windows instead
+        #ifdef _WIN32
+            Sleep(200);
+        #else
+            usleep(200000);
+        #endif
     }
     
     cout << "\nPress Enter to continue...";
-    cin.ignore();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cin.get();
 }
 
@@ -329,15 +365,15 @@ void playMinesweeper() {
     int movesLeft = SIDE * SIDE - MINES;
     bool gameOver = false;
     bool firstMove = true;
-    int firstRow, firstCol;
+    int firstRow = 0, firstCol = 0;
     
     displayInstructions();
     
     while (!gameOver) {
         printBoard(myBoard);
         
-        int x, y;
-        char action;
+        int x = 0, y = 0;
+        char action = '\0';
         makeMove(&x, &y, &action);
         
         if (firstMove) {
@@ -365,8 +401,11 @@ void playMinesweeper() {
             // Reveal the cell
             if (myBoard[x][y] == 'F') {
                 cout << COLOR_YELLOW << "Cell is flagged. Unflag it first." << COLOR_RESET << endl;
-                usleep(1000000); // 1 second delay
-                // Sleep(1000); // Use this for Windows instead
+                #ifdef _WIN32
+                    Sleep(1000);
+                #else
+                    usleep(1000000);
+                #endif
                 continue;
             }
             
@@ -381,7 +420,7 @@ void playMinesweeper() {
                 gameOver = true;
             } else {
                 // Reveal the cell with animation
-                bool visited[MAXSIDE][MAXSIDE] = {false};
+                bool visited[MAXSIDE][MAXSIDE] = {{false}};
                 revealCell(x, y, myBoard, realBoard, visited, &movesLeft);
                 
                 if (movesLeft == 0) {
@@ -406,7 +445,12 @@ void chooseDifficultyLevel() {
     int level;
     while (true) {
         cout << "Enter your choice (0-2): ";
-        cin >> level;
+        if (!(cin >> level)) {
+            cout << COLOR_RED << "Invalid input. Please enter a number." << COLOR_RESET << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
         
         if (level >= BEGINNER && level <= ADVANCED) {
             break;
@@ -439,38 +483,43 @@ void chooseDifficultyLevel() {
     }
     cout << " (" << SIDE << "x" << SIDE << " grid, " << MINES << " mines)" << COLOR_RESET << endl;
     
-    usleep(1500000); // 1.5 second delay
-    // Sleep(1500); // Use this for Windows instead
+    #ifdef _WIN32
+        Sleep(1500);
+    #else
+        usleep(1500000);
+    #endif
 }
 
 int main() {
-    srand(time(NULL)); // Seed random number generator
+    srand(static_cast<unsigned int>(time(NULL))); // Seed random number generator
     
-    // Title animation
-    clearScreen();
-    cout << COLOR_CYAN;
-    cout << "  __  __ _  ___  ___ _____ _____ _____________ _____" << endl;
-    cout << " |  \\/  | |/ _ \\/ _ \\_   _| ____|___ /___ /___ /" << endl;
-    cout << " | |\\/| | | | | | | | | | |  _|   |_ \\ |_ \\ |_ \\" << endl;
-    cout << " | |  | | | |_| | |_| | | | |___ ___) |__) |__) |" << endl;
-    cout << " |_|  |_|_|\\___/\\___/ |_| |_____|____/____/____/" << COLOR_RESET << endl;
-    
-    usleep(1000000); // 1 second delay
-    // Sleep(1000); // Use this for Windows instead
-    
-    chooseDifficultyLevel();
-    playMinesweeper();
-    
-    // Ask if player wants to play again
-    char playAgain;
-    cout << "\nWould you like to play again? (y/n): ";
-    cin >> playAgain;
-    
-    if (tolower(playAgain) == 'y') {
-        main(); // Restart the game
-    } else {
-        cout << COLOR_CYAN << "\nThanks for playing Minesweeper!\n" << COLOR_RESET;
+    bool playAgain = true;
+    while (playAgain) {
+        // Title animation
+        clearScreen();
+        cout << COLOR_CYAN;
+        cout << "  __  __ _  ___  ___ _____ _____ _____________ _____" << endl;
+        cout << " |  \\/  | |/ _ \\/ _ \\_   _| ____|___ /___ /___ /" << endl;
+        cout << " | |\\/| | | | | | | | | | |  _|   |_ \\ |_ \\ |_ \\" << endl;
+        cout << " | |  | | | |_| | |_| | | | |___ ___) |__) |__) |" << endl;
+        cout << " |_|  |_|_|\\___/\\___/ |_| |_____|____/____/____/" << COLOR_RESET << endl;
+        
+        #ifdef _WIN32
+            Sleep(1000);
+        #else
+            usleep(1000000);
+        #endif
+
+        chooseDifficultyLevel();
+        playMinesweeper();
+        
+        char response;
+        cout << "\nWould you like to play again? (y/n): ";
+        cin >> response;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        playAgain = (tolower(response) == 'y');
     }
-    
+
+    cout << COLOR_CYAN << "\nThanks for playing Minesweeper!\n" << COLOR_RESET;
     return 0;
 }
